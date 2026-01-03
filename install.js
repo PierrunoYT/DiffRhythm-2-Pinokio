@@ -36,16 +36,6 @@ module.exports = {
           // sageattention: true   // uncomment this line if your project requires sageattention
         }
       }
-    },
-    {
-      method: "script.start",
-      params: {
-        uri: "start.js",
-        params: {
-          venv: "env",
-          path: "app",
-        }
-      }
-    },  	
+    },	
   ]
 }
