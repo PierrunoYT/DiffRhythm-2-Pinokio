@@ -1,49 +1,37 @@
-module.exports = async (kernel) => {
-  let cmd = "pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cpu"
-  if (kernel.platform === 'darwin') {
-    if (kernel.arch === "arm64") {
-      cmd = "uv pip install torch torchaudio torchvision"
-    } else {
-      cmd = "uv pip install torch==2.1.2 torchaudio==2.1.2"
-    }
-  } else {
-    if (kernel.gpu === 'nvidia') {
-      if (kernel.gpu_model && / 50.+/.test(kernel.gpu_model)) {
-        cmd = "uv pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128"
-      } else {
-        cmd = "pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 xformers --index-url https://download.pytorch.org/whl/cu121"
+module.exports = {
+  run: [
+    // Clone the DiffRhythm2 repository
+    {
+      method: "shell.run",
+      params: {
+        message: "git clone https://huggingface.co/spaces/ASLP-lab/DiffRhythm2 app"
       }
-    } else if (kernel.gpu === 'amd') {
-      cmd = "pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/rocm6.0"
-    } 
-  }
-  return {
-    "run": [{
-      "method": "shell.run",
-      "params": {
-        "message": "git clone https://huggingface.co/spaces/ASLP-lab/DiffRhythm2 app"
-      }
-    }, {
-      "method": "shell.run",
-      "params": {
-        "venv": "env",
-        "path": "app",
-        "message": [
-          cmd,
+    },
+    // Install all dependencies from requirements.txt first
+    {
+      method: "shell.run",
+      params: {
+        venv: "app/env",
+        path: "app",
+        message: [
           "uv pip install -r requirements.txt",
           "uv pip install gradio==4.44.0",
           "uv pip install spaces",
         ]
       }
-    }, {
-      "method": "script.start",
-      "params": {
-        "uri": "start.js",
-        "params": {
-          "venv": "env",
-          "path": "app",
+    },
+    // Install torch with CUDA support at the end (includes xformers and triton)
+    {
+      method: "script.start",
+      params: {
+        uri: "torch.js",
+        params: {
+          venv: "app/env",
+          path: "app",
+          xformers: true,
+          triton: true
         }
       }
-    }]
-  }
+    }
+  ]
 }
